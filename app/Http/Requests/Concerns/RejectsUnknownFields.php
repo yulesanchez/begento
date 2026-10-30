@@ -5,7 +5,7 @@ namespace App\Http\Requests\Concerns;
 use Illuminate\Contracts\Validation\Validator;
 
 /**
- * Rechaza cualquier clave del cuerpo que no esté declarada en rules().
+ * Rechaza cualquier clave que no esté declarada en rules().
  * Los campos permitidos se derivan de las propias reglas para no duplicarlos.
  */
 trait RejectsUnknownFields
@@ -13,7 +13,7 @@ trait RejectsUnknownFields
     protected function rejectUnknownFields(Validator $validator): void
     {
         $allowed = array_map(
-            static fn (string $key): string => explode('.', $key)[0],
+            static fn(string $key): string => explode('.', $key)[0],
             array_keys($this->rules()),
         );
 
@@ -25,7 +25,7 @@ trait RejectsUnknownFields
 
         $validator->errors()->add(
             'payload',
-            'El cuerpo de la petición contiene campos no permitidos: '.implode(', ', $unknown).'.'
+            'El cuerpo de la petición contiene campos no permitidos: ' . implode(', ', $unknown) . '.'
         );
     }
 }

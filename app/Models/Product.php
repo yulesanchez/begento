@@ -45,8 +45,7 @@ class Product extends Model
     }
 
     /**
-     * Aplica la búsqueda por texto y el ordenamiento del listado. El orden se
-     * aplica siempre, con o sin término de búsqueda (RNF-06).
+     * Aplica la búsqueda por texto y el ordenamiento del listado. 
      *
      * @param  Builder<Product>  $query
      */
