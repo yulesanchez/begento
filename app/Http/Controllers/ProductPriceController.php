@@ -77,6 +77,7 @@ class ProductPriceController extends Controller
         ],
         requestBody: new OA\RequestBody(
             required: true,
+            description: 'Solo se aceptan los campos declarados en el esquema; cualquier clave extra devuelve 422.',
             content: new OA\JsonContent(ref: '#/components/schemas/ProductPricePayload'),
         ),
         responses: [

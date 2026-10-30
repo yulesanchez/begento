@@ -109,3 +109,18 @@ test('usa mensajes personalizados en los errores', function () {
         ->assertJsonPath('errors.price.0', 'El precio es obligatorio.')
         ->assertJsonPath('errors.currency_id.0', 'La divisa es obligatoria.');
 });
+
+test('rechaza campos no declarados en el payload', function () {
+    $product = Product::factory()->create(['name' => 'Laptop Pro 14']);
+
+    $response = $this->putJson("/api/v1/products/{$product->id}", updatePayload([
+        'nameXXX' => 'Laptop Pro 14',
+        'descriptionZZZ' => 'Portátil',
+    ]));
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['payload'])
+        ->assertJsonPath('errors.payload.0', 'El cuerpo de la petición contiene campos no permitidos: nameXXX, descriptionZZZ.');
+
+    expect($product->fresh()->name)->toBe('Laptop Pro 14');
+});

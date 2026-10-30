@@ -27,6 +27,7 @@ class ProductController extends Controller
         description: 'Crea un producto. Devuelve la cabecera Location con la URL del recurso creado.',
         requestBody: new OA\RequestBody(
             required: true,
+            description: 'Solo se aceptan los campos declarados en el esquema; cualquier clave extra devuelve 422.',
             content: new OA\JsonContent(ref: '#/components/schemas/ProductPayload'),
         ),
         responses: [
@@ -102,13 +103,13 @@ class ProductController extends Controller
     }
 
     /**
-     * Devuelve un producto con su divisa.
+     * Obtener un producto por ID.
      */
     #[OA\Get(
         path: '/products/{product}',
         operationId: 'showProduct',
         tags: ['Products'],
-        summary: 'Devuelve un producto con su divisa',
+        summary: 'Obtener un producto por ID',
         parameters: [
             new OA\Parameter(name: 'product', in: 'path', required: true, description: 'Identificador del producto.', schema: new OA\Schema(type: 'integer', minimum: 1)),
         ],
@@ -142,7 +143,8 @@ class ProductController extends Controller
         ],
         requestBody: new OA\RequestBody(
             required: true,
-            content: new OA\JsonContent(ref: '#/components/schemas/ProductPayload'),
+            description: 'La divisa base (currency_id) no se puede modificar: debe coincidir con la actual del producto. Solo se aceptan los campos del esquema.',
+            content: new OA\JsonContent(ref: '#/components/schemas/ProductUpdatePayload'),
         ),
         responses: [
             new OA\Response(

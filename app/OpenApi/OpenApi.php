@@ -98,6 +98,22 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'tax_cost', type: 'number', format: 'float', nullable: true, example: 150.00),
         new OA\Property(property: 'manufacturing_cost', type: 'number', format: 'float', nullable: true, description: 'Debe ser estrictamente menor que price.', example: 900.00),
     ],
+    additionalProperties: false,
+    type: 'object',
+)]
+#[OA\Schema(
+    schema: 'ProductUpdatePayload',
+    description: 'Cuerpo del PUT. La divisa base no es editable: se conserva la del producto.',
+    required: ['name', 'description', 'price', 'currency_id'],
+    properties: [
+        new OA\Property(property: 'name', type: 'string', maxLength: 120, example: 'Laptop Pro 14'),
+        new OA\Property(property: 'description', type: 'string', maxLength: 500, example: 'Portátil de 14 pulgadas'),
+        new OA\Property(property: 'price', type: 'number', format: 'float', example: 1500.50),
+        new OA\Property(property: 'currency_id', type: 'integer', description: 'Divisa base del producto. No es editable: debe coincidir con la actual o la petición se rechaza con 409.', example: 1),
+        new OA\Property(property: 'tax_cost', type: 'number', format: 'float', nullable: true, example: 150.00),
+        new OA\Property(property: 'manufacturing_cost', type: 'number', format: 'float', nullable: true, description: 'Debe ser estrictamente menor que price.', example: 900.00),
+    ],
+    additionalProperties: false,
     type: 'object',
 )]
 #[OA\Schema(
@@ -107,6 +123,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'currency_id', type: 'integer', example: 2),
         new OA\Property(property: 'price', type: 'number', format: 'float', nullable: true, description: 'Si se omite se calcula con la tasa de la divisa.', example: 1422.10),
     ],
+    additionalProperties: false,
     type: 'object',
 )]
 class OpenApi {}

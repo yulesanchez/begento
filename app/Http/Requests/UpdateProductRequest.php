@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\RejectsUnknownFields;
 use App\Models\Product;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -9,6 +10,8 @@ use Illuminate\Validation\Rule;
 
 class UpdateProductRequest extends FormRequest
 {
+    use RejectsUnknownFields;
+
     /**
      * Comprueba si el usuario está autorizado para realizar esta solicitud.
      */
@@ -99,6 +102,7 @@ class UpdateProductRequest extends FormRequest
             'currency_id' => 'divisa',
             'tax_cost' => 'impuesto',
             'manufacturing_cost' => 'costo de fabricación',
+            'payload' => 'cuerpo de la petición',
         ];
     }
 
@@ -111,6 +115,9 @@ class UpdateProductRequest extends FormRequest
     public function after(): array
     {
         return [
+            function (Validator $validator): void {
+                $this->rejectUnknownFields($validator);
+            },
             function (Validator $validator): void {
                 if ($validator->errors()->hasAny(['price', 'tax_cost', 'manufacturing_cost'])) {
                     return;

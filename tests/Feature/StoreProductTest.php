@@ -96,14 +96,16 @@ test('responde 415 cuando el Content-Type no es soportado', function () {
     expect(Product::count())->toBe(0);
 });
 
-test('ignora campos protegidos enviados en el cuerpo', function () {
+test('rechaza campos no declarados en el payload', function () {
     $response = $this->postJson('/api/v1/products', validPayload([
         'id' => 999,
         'created_at' => '2000-01-01',
+        'nameXXX' => 'Laptop Pro 14',
     ]));
 
-    $response->assertCreated();
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['payload'])
+        ->assertJsonPath('errors.payload.0', 'El cuerpo de la petición contiene campos no permitidos: id, created_at, nameXXX.');
 
-    expect($response->json('data.id'))->not->toBe(999);
-    expect(Product::first()->created_at->year)->not->toBe(2000);
+    expect(Product::count())->toBe(0);
 });

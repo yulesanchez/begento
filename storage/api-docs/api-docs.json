@@ -125,6 +125,7 @@
                 "description": "Crea un producto. Devuelve la cabecera Location con la URL del recurso creado.",
                 "operationId": "storeProduct",
                 "requestBody": {
+                    "description": "Solo se aceptan los campos declarados en el esquema; cualquier clave extra devuelve 422.",
                     "required": true,
                     "content": {
                         "application/json": {
@@ -186,8 +187,8 @@
                 "tags": [
                     "Products"
                 ],
-                "summary": "Devuelve un producto con su divisa",
-                "description": "Devuelve un producto con su divisa.",
+                "summary": "Obtener un producto por ID",
+                "description": "Obtener un producto por ID.",
                 "operationId": "showProduct",
                 "parameters": [
                     {
@@ -249,11 +250,12 @@
                     }
                 ],
                 "requestBody": {
+                    "description": "La divisa base (currency_id) no se puede modificar: debe coincidir con la actual del producto. Solo se aceptan los campos del esquema.",
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/ProductPayload"
+                                "$ref": "#/components/schemas/ProductUpdatePayload"
                             }
                         }
                     }
@@ -478,6 +480,7 @@
                     }
                 ],
                 "requestBody": {
+                    "description": "Solo se aceptan los campos declarados en el esquema; cualquier clave extra devuelve 422.",
                     "required": true,
                     "content": {
                         "application/json": {
@@ -749,7 +752,54 @@
                         "nullable": true
                     }
                 },
-                "type": "object"
+                "type": "object",
+                "additionalProperties": false
+            },
+            "ProductUpdatePayload": {
+                "description": "Cuerpo del PUT. La divisa base no es editable: se conserva la del producto.",
+                "required": [
+                    "name",
+                    "description",
+                    "price",
+                    "currency_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Laptop Pro 14",
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Portátil de 14 pulgadas",
+                        "maxLength": 500
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1500.5
+                    },
+                    "currency_id": {
+                        "description": "Divisa base del producto. No es editable: debe coincidir con la actual o la petición se rechaza con 409.",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "tax_cost": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 150,
+                        "nullable": true
+                    },
+                    "manufacturing_cost": {
+                        "description": "Debe ser estrictamente menor que price.",
+                        "type": "number",
+                        "format": "float",
+                        "example": 900,
+                        "nullable": true
+                    }
+                },
+                "type": "object",
+                "additionalProperties": false
             },
             "ProductPricePayload": {
                 "required": [
@@ -768,7 +818,8 @@
                         "nullable": true
                     }
                 },
-                "type": "object"
+                "type": "object",
+                "additionalProperties": false
             }
         }
     },

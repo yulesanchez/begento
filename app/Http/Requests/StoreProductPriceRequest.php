@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\RejectsUnknownFields;
 use App\Models\Currency;
 use App\Models\Product;
 use App\Models\ProductPrice;
@@ -11,6 +12,8 @@ use Illuminate\Validation\Rule;
 
 class StoreProductPriceRequest extends FormRequest
 {
+    use RejectsUnknownFields;
+
     /**
      * Comprueba si el usuario está autorizado para realizar esta solicitud.
      */
@@ -62,6 +65,7 @@ class StoreProductPriceRequest extends FormRequest
         return [
             'currency_id' => 'divisa',
             'price' => 'precio',
+            'payload' => 'cuerpo de la petición',
         ];
     }
 
@@ -74,6 +78,9 @@ class StoreProductPriceRequest extends FormRequest
     public function after(): array
     {
         return [
+            function (Validator $validator): void {
+                $this->rejectUnknownFields($validator);
+            },
             function (Validator $validator): void {
                 if ($validator->errors()->has('currency_id')) {
                     return;

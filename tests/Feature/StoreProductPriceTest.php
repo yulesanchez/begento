@@ -137,3 +137,20 @@ test('redondea a dos decimales con HALF_UP', function () {
 
     $response->assertCreated()->assertJsonPath('data.price', '1380.46');
 });
+
+test('rechaza campos no declarados en el payload', function () {
+    $product = Product::factory()->create(['currency_id' => CurrencyFactory::resolveId('USD')]);
+    $eur = Currency::factory()->eur()->create();
+
+    $response = $this->postJson("/api/v1/products/{$product->id}/prices", [
+        'currency_id' => $eur->id,
+        'price' => 1380.00,
+        'rate' => 0.89,
+    ]);
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors(['payload'])
+        ->assertJsonPath('errors.payload.0', 'El cuerpo de la petición contiene campos no permitidos: rate.');
+
+    expect(ProductPrice::count())->toBe(0);
+});
