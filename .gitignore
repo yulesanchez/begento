@@ -27,6 +27,7 @@ Homestead.yaml
 Thumbs.db
 /requerimientos/historias-usuario
 /requerimientos/README.md
+/requerimientos/componentes.md
 /.agents
 /.claude/skills
 /.cursor
