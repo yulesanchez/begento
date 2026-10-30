@@ -163,7 +163,11 @@ class ProductController extends Controller
     public function update(UpdateProductRequest $request, Product $product): JsonResponse|ProductResource
     {
         if ($this->productService->blocksCurrencyChange($product, (int) $request->validated('currency_id'))) {
-            return response()->json(['message' => 'No se puede cambiar la divisa base.'], 409);
+            return response()->json([
+                'message' => 'No se puede cambiar la divisa base.',
+                'error' => 'CONFLICT',
+                'data' => null,
+            ], 409);
         }
 
         return ProductResource::make(

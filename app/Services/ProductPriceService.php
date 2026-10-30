@@ -73,7 +73,7 @@ class ProductPriceService
     }
 
     /**
-     * Redondeo HALF_UP a 2 decimales (RNF-08).
+     * Redondeo HALF_UP a 2 decimales
      */
     public function round(float $value): float
     {

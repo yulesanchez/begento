@@ -124,3 +124,15 @@ test('rechaza campos no declarados en el payload', function () {
 
     expect($product->fresh()->name)->toBe('Laptop Pro 14');
 });
+
+test('rechaza un impuesto mayor que el precio', function () {
+    $product = Product::factory()->create();
+
+    $response = $this->putJson("/api/v1/products/{$product->id}", updatePayload([
+        'price' => 100,
+        'tax_cost' => 200,
+        'manufacturing_cost' => 10,
+    ]));
+
+    $response->assertUnprocessable()->assertJsonValidationErrors(['tax_cost']);
+});

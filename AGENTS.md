@@ -160,5 +160,11 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 </laravel-boost-guidelines>
 
 ## Rules mandatory
+- **Pacing**: Entre cada iteración interna (llamada a herramienta o petición sucesiva del modelo), aplicar una espera de 2000 ms antes de continuar con la siguiente.
+- **Persistencia de memoria**: `.ai/rules/general.md` (normas), `.ai/rules/memory.md` (índice curado),
+  `.ai/memory/YYYY-MM.jsonl` (log append-only, fuente de verdad) y `.ai/memory/index.json` (índice KV
+  derivado, regenerar con `python .ai/memory/build-index.py`)
 - **Salidas / outputs**: Directas sin adornos, explicaciones directas sin tecnisismo.
 - **Deteccion de intencion**: si la intencion es en forma de pregunta, responde directo con lo que espera el usuario preferencia snapshot y una mini explicacion, si el usuario tiene duda aclara con mini explicaciòn snapshot y lo que se logra con eso.
+- **Fuente de la verdad**: No inventar ningun requerimiento o que no se haya solicitado dentro de `requerimientos/Prueba Backend.md`, 
+- **Refinamiento de entradas**: usar la skill global prompter `%userprofile%/.agents/skills/prompter/skill.md` para refinamiento inicial de la entrada del usuario, convertirala en una entrada mas tecnica y refinarla con criterios de ingenieria con apoyo de la skill `%userprofile%/.agents/skills/assertive-critical-engineenring/skill.md`

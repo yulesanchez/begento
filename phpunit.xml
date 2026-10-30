@@ -11,11 +11,17 @@
         <testsuite name="Feature">
             <directory>tests/Feature</directory>
         </testsuite>
+        <testsuite name="E2E">
+            <directory>tests/E2E</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>
             <directory>app</directory>
         </include>
+        <exclude>
+            <file>app/Models/User.php</file>
+        </exclude>
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>

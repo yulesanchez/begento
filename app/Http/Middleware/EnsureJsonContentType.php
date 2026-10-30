@@ -39,6 +39,8 @@ class EnsureJsonContentType
         if (! in_array($mime, self::ALLOWED, true) && ! str_ends_with($mime, '+json')) {
             return response()->json([
                 'message' => 'El tipo de contenido no es soportado. Use application/json.',
+                'error' => 'UNSUPPORTED_MEDIA_TYPE',
+                'data' => null,
             ], 415);
         }
 

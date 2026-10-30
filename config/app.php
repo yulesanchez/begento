@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Limite de peticiones de la API
+    |--------------------------------------------------------------------------
+    |
+    | Peticiones por minuto y por IP para el limitador "api". Se eleva en las
+    | pruebas de estrés mediante la variable de entorno API_RATE_LIMIT.
+    |
+    */
+
+    'api_rate_limit' => (int) env('API_RATE_LIMIT', 60),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

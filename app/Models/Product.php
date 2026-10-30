@@ -14,6 +14,16 @@ class Product extends Model
     /** @use HasFactory<ProductFactory> */
     use HasFactory;
 
+    /**
+     * Columnas permitidas para ordenar el listado.
+     *
+     * @var array<int, string>
+     */
+    public const SORTABLE = ['name', 'price', 'created_at', 'updated_at'];
+
+    /** @var array<int, string> */
+    public const DIRECTIONS = ['asc', 'desc'];
+
     protected $fillable = [
         'name',
         'description',
@@ -45,7 +55,7 @@ class Product extends Model
     }
 
     /**
-     * Aplica la búsqueda por texto y el ordenamiento del listado. 
+     * Aplica la búsqueda por texto y el ordenamiento del listado.
      *
      * @param  Builder<Product>  $query
      */
@@ -54,11 +64,16 @@ class Product extends Model
         $term = trim((string) $term);
 
         if ($term !== '') {
-            $query->where(function (Builder $query) use ($term): void {
-                $query->where('name', 'like', "%{$term}%")
-                    ->orWhere('description', 'like', "%{$term}%");
+            $pattern = "%{$term}%";
+
+            $query->where(function (Builder $query) use ($pattern): void {
+                $query->where('name', 'like', $pattern)
+                    ->orWhere('description', 'like', $pattern);
             });
         }
+
+        $sort = in_array($sort, self::SORTABLE, true) ? $sort : 'created_at';
+        $direction = in_array($direction, self::DIRECTIONS, true) ? $direction : 'desc';
 
         $query->orderBy($sort, $direction);
     }

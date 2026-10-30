@@ -2,18 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Product;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class ProductIndexRequest extends FormRequest
 {
-    /**
-     * Columnas permitidas para ordenar el listado (evita inyección en orderBy).
-     *
-     * @var array<int, string>
-     */
-    public const SORTABLE = ['name', 'price', 'created_at', 'updated_at'];
-
     public function authorize(): bool
     {
         return true;
@@ -28,8 +22,8 @@ class ProductIndexRequest extends FormRequest
             'search' => ['nullable', 'string', 'max:120'],
             'page' => ['sometimes', 'integer', 'min:0'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
-            'sort' => ['sometimes', 'string', Rule::in(self::SORTABLE)],
-            'direction' => ['sometimes', 'string', Rule::in(['asc', 'desc'])],
+            'sort' => ['sometimes', 'string', Rule::in(Product::SORTABLE)],
+            'direction' => ['sometimes', 'string', Rule::in(Product::DIRECTIONS)],
         ];
     }
 

@@ -62,6 +62,30 @@ test('acepta ordenamiento por precio descendente', function () {
     $response->assertOk()->assertJsonPath('data.0.price', '900.00');
 });
 
+test('acepta el ordenamiento por nombre descendente en el límite de per_page', function () {
+    Product::factory()->create(['name' => 'Alfa']);
+    Product::factory()->create(['name' => 'Zulu']);
+
+    $response = $this->getJson('/api/v1/products?page=1&per_page=100&sort=name&direction=desc');
+
+    $response->assertOk()
+        ->assertJsonCount(2, 'data')
+        ->assertJsonPath('data.0.name', 'Zulu')
+        ->assertJsonPath('data.1.name', 'Alfa')
+        ->assertJsonPath('meta.per_page', 100);
+});
+
+test('ordena por nombre ascendente con direction=asc', function () {
+    Product::factory()->create(['name' => 'Alfa']);
+    Product::factory()->create(['name' => 'Zulu']);
+
+    $response = $this->getJson('/api/v1/products?sort=name&direction=asc');
+
+    $response->assertOk()
+        ->assertJsonPath('data.0.name', 'Alfa')
+        ->assertJsonPath('data.1.name', 'Zulu');
+});
+
 test('devuelve una página vacía cuando la página está fuera de rango', function () {
     Product::factory()->count(2)->create();
 

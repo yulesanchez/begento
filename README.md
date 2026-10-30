@@ -14,6 +14,7 @@ API RESTful en Laravel para la gestión de productos y el registro de sus precio
 - PHP 8.3 o superior
 - Composer
 - SQLite (por defecto) o cualquier motor soportado por Laravel
+- Node 18 o superior (solo para las pruebas de estrés)
 
 ## Instalación
 
@@ -32,8 +33,11 @@ Variables relevantes del `.env`:
 ```dotenv
 APP_URL=http://localhost:8000
 DB_CONNECTION=sqlite
+API_RATE_LIMIT=60
 L5_SWAGGER_GENERATE_ALWAYS=true
 ```
+
+`API_RATE_LIMIT` es el máximo de peticiones por minuto y por IP que aplica el limitador `api` ([`AppServiceProvider`](app/Providers/AppServiceProvider.php)); en producción se deja en 60 y solo se eleva en el proceso que ejecuta la prueba de estrés.
 
 ## Estructura
 
@@ -46,6 +50,8 @@ app/
 ├── Models/              Product, ProductPrice, Currency
 ├── OpenApi/             Definición raíz OpenAPI (info, servidores, esquemas)
 └── Services/            ProductService, ProductPriceService
+scripts/
+└── stress.mjs           Prueba de carga sin dependencias externas
 ```
 
 La lógica de negocio vive en los `Services`; los controladores solo orquestan petición, servicio y respuesta.
@@ -195,46 +201,110 @@ Respuesta `201` con cabecera `Location`.
 
 ## Errores
 
-| Código | Cuándo |
-| --- | --- |
-| 404 | Recurso inexistente (`{"message": "Producto no encontrado.", "error": "NOT_FOUND", "data": null}`) |
-| 409 | Cambio de divisa base bloqueado |
-| 415 | `Content-Type` distinto de `application/json` |
-| 422 | Fallo de validación (`message` + `errors` por campo) |
-| 500 | Error inesperado |
+Toda respuesta de error bajo `/api/v1` usa el mismo sobre:
+
+```json
+{ "message": "...", "error": "CODIGO", "data": null }
+```
+
+| Código | `error` | Cuándo |
+| --- | --- | --- |
+| 400 | `BAD_REQUEST` | Petición mal formada |
+| 404 | `NOT_FOUND` | Recurso inexistente (`Producto no encontrado.` en `/products/*`, `Recurso no encontrado.` en el resto) |
+| 405 | `METHOD_NOT_ALLOWED` | Verbo HTTP no soportado (incluye cabecera `Allow`) |
+| 409 | `CONFLICT` | Cambio de divisa base bloqueado (`{"message": "No se puede cambiar la divisa..."}`) |
+| 415 | `UNSUPPORTED_MEDIA_TYPE` | `Content-Type` distinto de `application/json` |
+| 422 | `VALIDATION_ERROR` | Fallo de validación (`errors` por campo, además del sobre) |
+| 429 | `TOO_MANY_REQUESTS` | Límite de 60 peticiones por minuto y por IP (incluye `Retry-After`) |
+| 500 | `SERVER_ERROR` | Error inesperado (sin traza en la respuesta; queda en el log) |
 
 ## Documentación
 
-Swagger UI: **http://localhost:8000/api/documentation**
+| URL | Contenido |
+|---|---|
+| **http://localhost:8000/api/documentation** | Swagger UI (plantilla del paquete `l5-swagger`) |
+| **http://localhost:8000/api/documentation/es** | Misma especificación con la UI traducida (`public/js/swagger-ui-es.js`); no se modifican archivos de `vendor/` |
+| **http://localhost:8000/docs** | Contrato OpenAPI en JSON crudo |
 
-Interfaz en español: **http://localhost:8000/api/documentation/es** (misma especificación, con la UI traducida por `public/js/swagger-ui-es.js`; no se modifican los archivos del paquete en `vendor/`).
-
-El contrato OpenAPI vive en `storage/api-docs/api-docs.json` y se regenera con:
+El contrato vive en `storage/api-docs/api-docs.json`. Los scripts de Composer lo mantienen al día:
 
 ```bash
-php artisan l5-swagger:generate
+composer docs          # regenera el contrato (php artisan l5-swagger:generate)
+composer docs:serve    # regenera el contrato y levanta el servidor en http://127.0.0.1:8000
 ```
+
+`/api/documentation/es` es una vista del grupo `web`, por lo que abre sesión y necesita una base de datos alcanzable: usa `DB_CONNECTION=sqlite` con `SESSION_DRIVER=file` (MySQL detenido produce 500 en esa ruta). `/docs` y `/api/documentation` responden sin base de datos porque su middleware no abre sesión.
 
 También se incluye una colección de Postman en [`docs/Begento-API.postman_collection.json`](docs/Begento-API.postman_collection.json). Importarla y ajustar la variable `base_url` si es necesario.
 
 ## Pruebas
 
 ```bash
-php artisan test --compact
+php artisan test --compact      # suite completa: Unit + Feature + E2E
+vendor/bin/pest                 # equivalente directo
+vendor/bin/pest tests/Feature/ListProductTest.php --filter="listado vacío"
+vendor/bin/pest --testsuite=E2E # solo HTTP real (php -S + Guzzle), ~35 s
 ```
 
-O directamente:
+Cobertura de líneas sobre `app/` (105 tests, 100 %; requiere Xdebug instalado en `ext/` del PHP):
 
 ```bash
-vendor/bin/pest
-vendor/bin/pest tests/Feature/ListProductTest.php --filter="listado vacío"
+php -d zend_extension=php_xdebug-3.5.3-8.4-ts-vs17-x86_64.dll -d xdebug.mode=coverage vendor/bin/pest --coverage
 ```
+
+`app/Models/User.php` queda excluido en `phpunit.xml`: el enunciado no pide autenticación. La suite `E2E` corre en un proceso hijo, así que sus líneas no se suman al reporte; el 100 % lo sostienen Unit y Feature.
 
 Formato de código:
 
 ```bash
 vendor/bin/pint --dirty --format agent
 ```
+
+## Pruebas de estrés
+
+[`scripts/stress.mjs`](scripts/stress.mjs) mide throughput y latencia sin dependencias externas (usa `fetch` nativo de Node 18+).
+
+El limitador `api` fija 60 req/min por IP. Para estresar de verdad hay que elevarlo solo en ese proceso:
+
+```bash
+API_RATE_LIMIT=100000 php artisan serve
+```
+
+En PowerShell:
+
+```powershell
+$env:DB_CONNECTION='sqlite'; $env:SESSION_DRIVER='file'; $env:CACHE_STORE='file'; $env:API_RATE_LIMIT='100000'
+php artisan serve
+```
+
+Carga cerrada (N peticiones):
+
+```bash
+node scripts/stress.mjs --url="http://127.0.0.1:8000/api/v1/products?page=1&per_page=100&sort=name&direction=desc" --requests=500 --concurrency=20
+```
+
+Carga abierta (duración en segundos):
+
+```bash
+node scripts/stress.mjs --duration=30 --concurrency=50 --expect=200
+```
+
+Opciones: `--method`, `--header="K: V"` (repetible), `--body`, `--timeout`, `--expect=200,422`, `--json`.
+
+| Salida | Significado |
+| --- | --- |
+| `Rendimiento` | peticiones completadas por segundo |
+| `Latencia ms` | percentiles p50/p90/p99, mínimo y máximo |
+| `Estados` | histograma de códigos HTTP recibidos |
+| `Fuera de lo esperado` | respuestas que no están en `--expect` |
+
+El proceso termina con código 1 si hay fallos de red o estados inesperados, así que sirve como puerta en CI. Para observar el `429` basta dejar el límite en 60 y enviar más de 60 peticiones:
+
+```bash
+node scripts/stress.mjs --requests=90 --concurrency=5 --expect=200
+```
+
+Advertencia: `php artisan serve` es mono-proceso y `PHP_CLI_SERVER_WORKERS` no funciona en Windows. Los números miden el servidor de desarrollo, no la aplicación. Para cifras representativas se necesita nginx + php-fpm (Laragon/WAMP) detrás de la misma base de código.
 
 ## Licencia
 

@@ -107,10 +107,6 @@ class StoreProductPriceRequest extends FormRequest
                 }
 
                 $currency = Currency::query()->find($currencyId);
-                if (! $currency) {
-                    return;
-                }
-
                 $hasPrice = $this->filled('price');
 
                 if ($currencyId === (int) $product->currency_id) {
@@ -121,7 +117,7 @@ class StoreProductPriceRequest extends FormRequest
                     return;
                 }
 
-                if (! $hasPrice && (float) $currency->exchange_rate <= 0) {
+                if (! $hasPrice && $currency !== null && (float) $currency->exchange_rate <= 0) {
                     $validator->errors()->add('price', 'Se requiere un precio o una tasa de cambio válida para la divisa.');
                 }
             },

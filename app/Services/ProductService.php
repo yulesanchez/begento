@@ -31,14 +31,6 @@ class ProductService
     }
 
     /**
-     * Busca un producto por su identificador.
-     */
-    public function find(int $id): ?Product
-    {
-        return Product::find($id);
-    }
-
-    /**
      * Actualiza el producto y devuelve el estado persistido.
      *
      * @param  array<string, mixed>  $data
@@ -60,7 +52,7 @@ class ProductService
     }
 
     /**
-     * La divisa base no puede cambiarse si ya hay precios en otras divisas (RF-PROD-16).
+     * La divisa base no puede cambiarse si ya hay precios en otras divisas
      */
     public function blocksCurrencyChange(Product $product, int $currencyId): bool
     {
