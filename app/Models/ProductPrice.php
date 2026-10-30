@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Models;
+
+use Database\Factories\ProductPriceFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class ProductPrice extends Model
+{
+    /** @use HasFactory<ProductPriceFactory> */
+    use HasFactory;
+
+    protected $fillable = [
+        'product_id',
+        'currency_id',
+        'price',
+        'rate_used',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'price' => 'decimal:2',
+            'rate_used' => 'decimal:6',
+        ];
+    }
+
+    /** @return BelongsTo<Product, $this> */
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    /** @return BelongsTo<Currency, $this> */
+    public function currency(): BelongsTo
+    {
+        return $this->belongsTo(Currency::class);
+    }
+}

@@ -1,0 +1,785 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Begento Products API",
+        "description": "API REST para la gestión de productos y el registro de precios por divisa.",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "/api/v1",
+            "description": "Servidor local"
+        }
+    ],
+    "paths": {
+        "/products": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Lista los productos de forma paginada",
+                "description": "Lista los productos de forma paginada con búsqueda y ordenamiento.",
+                "operationId": "listProducts",
+                "parameters": [
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Filtra por nombre o descripción.",
+                        "schema": {
+                            "type": "string",
+                            "maxLength": 120
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Página solicitada (0 y 1 son la primera).",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1,
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Registros por página.",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Campo de ordenamiento.",
+                        "schema": {
+                            "type": "string",
+                            "default": "created_at",
+                            "enum": [
+                                "name",
+                                "price",
+                                "created_at",
+                                "updated_at"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "description": "Sentido del ordenamiento.",
+                        "schema": {
+                            "type": "string",
+                            "default": "desc",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Listado paginado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Product"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Parámetros de consulta inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Registra un producto",
+                "description": "Crea un producto. Devuelve la cabecera Location con la URL del recurso creado.",
+                "operationId": "storeProduct",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Producto creado",
+                        "headers": {
+                            "Location": {
+                                "description": "URL del producto creado",
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Product"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "Content-Type no soportado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Datos inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/products/{product}": {
+            "get": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Devuelve un producto con su divisa",
+                "description": "Devuelve un producto con su divisa.",
+                "operationId": "showProduct",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "Identificador del producto.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Producto encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Product"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Producto no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Actualiza un producto existente",
+                "description": "Actualiza un producto existente.",
+                "operationId": "updateProduct",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "Identificador del producto.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductPayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Producto actualizado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/Product"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Producto no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "No se puede cambiar la divisa base porque existen precios en otras divisas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Datos inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Products"
+                ],
+                "summary": "Elimina un producto y sus precios",
+                "description": "Elimina el producto junto con sus precios.",
+                "operationId": "destroyProduct",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "Identificador del producto.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Producto eliminado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Producto eliminado."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Producto no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/products/{product}/prices": {
+            "get": {
+                "tags": [
+                    "Prices"
+                ],
+                "summary": "Lista los precios del producto por divisa",
+                "description": "Lista paginada de los precios del producto en cada divisa.",
+                "operationId": "listProductPrices",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "Identificador del producto.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1,
+                            "minimum": 0
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Campo de ordenamiento; el prefijo \"-\" indica descendente.",
+                        "schema": {
+                            "type": "string",
+                            "default": "-created_at",
+                            "enum": [
+                                "price",
+                                "created_at",
+                                "id",
+                                "-price",
+                                "-created_at",
+                                "-id"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Precios paginados del producto",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ProductPrice"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "$ref": "#/components/schemas/PaginationMeta"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Producto no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Parámetros de consulta inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Prices"
+                ],
+                "summary": "Registra el precio del producto en una divisa",
+                "description": "Si no se envía price, se calcula multiplicando el precio base por la tasa de la divisa. Devuelve 201 con la cabecera Location.",
+                "operationId": "storeProductPrice",
+                "parameters": [
+                    {
+                        "name": "product",
+                        "in": "path",
+                        "description": "Identificador del producto.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ProductPricePayload"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Precio registrado",
+                        "headers": {
+                            "Location": {
+                                "description": "URL del precio creado",
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProductPrice"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Producto no encontrado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorMessage"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Datos inválidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Currency": {
+                "description": "Divisa asociada al producto o al precio.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "USD"
+                    },
+                    "symbol": {
+                        "type": "string",
+                        "example": "$"
+                    },
+                    "exchange_rate": {
+                        "type": "string",
+                        "example": "1.000000"
+                    }
+                },
+                "type": "object"
+            },
+            "Product": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Laptop Pro 14"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Portátil de 14 pulgadas"
+                    },
+                    "price": {
+                        "type": "string",
+                        "example": "1500.50"
+                    },
+                    "tax_cost": {
+                        "type": "string",
+                        "example": "150.00"
+                    },
+                    "manufacturing_cost": {
+                        "type": "string",
+                        "example": "900.00"
+                    },
+                    "currency": {
+                        "$ref": "#/components/schemas/Currency"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ProductPrice": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "product_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "currency_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "price": {
+                        "type": "string",
+                        "example": "1422.10"
+                    },
+                    "rate_used": {
+                        "type": "string",
+                        "example": "0.947688"
+                    },
+                    "currency": {
+                        "$ref": "#/components/schemas/Currency"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "PaginationMeta": {
+                "properties": {
+                    "current_page": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "from": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "last_page": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "path": {
+                        "type": "string"
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "to": {
+                        "type": "integer",
+                        "example": 15,
+                        "nullable": true
+                    },
+                    "total": {
+                        "type": "integer",
+                        "example": 42
+                    },
+                    "base_currency_id": {
+                        "description": "Solo en el listado de precios.",
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "ValidationError": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "El nombre del producto es obligatorio. (and 1 more error)"
+                    },
+                    "errors": {
+                        "type": "object",
+                        "example": {
+                            "name": [
+                                "El nombre del producto es obligatorio."
+                            ]
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorMessage": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "Producto no encontrado."
+                    },
+                    "error": {
+                        "type": "string",
+                        "example": "NOT_FOUND"
+                    },
+                    "data": {
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ProductPayload": {
+                "required": [
+                    "name",
+                    "description",
+                    "price",
+                    "currency_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Laptop Pro 14",
+                        "maxLength": 120
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Portátil de 14 pulgadas",
+                        "maxLength": 500
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1500.5
+                    },
+                    "currency_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "tax_cost": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 150,
+                        "nullable": true
+                    },
+                    "manufacturing_cost": {
+                        "description": "Debe ser estrictamente menor que price.",
+                        "type": "number",
+                        "format": "float",
+                        "example": 900,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ProductPricePayload": {
+                "required": [
+                    "currency_id"
+                ],
+                "properties": {
+                    "currency_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "price": {
+                        "description": "Si se omite se calcula con la tasa de la divisa.",
+                        "type": "number",
+                        "format": "float",
+                        "example": 1422.1,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Products",
+            "description": "Registro, listado, consulta, actualización y eliminación de productos"
+        },
+        {
+            "name": "Prices",
+            "description": "Precios de un producto expresados en cada divisa"
+        }
+    ]
+}
