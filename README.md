@@ -207,6 +207,8 @@ Respuesta `201` con cabecera `Location`.
 
 Swagger UI: **http://localhost:8000/api/documentation**
 
+Interfaz en español: **http://localhost:8000/api/documentation/es** (misma especificación, con la UI traducida por `public/js/swagger-ui-es.js`; no se modifican los archivos del paquete en `vendor/`).
+
 El contrato OpenAPI vive en `storage/api-docs/api-docs.json` y se regenera con:
 
 ```bash
